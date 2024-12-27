@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Location</title>
+</head>
+<body>
+    <h1>Send Your Location</h1>
+    <button id="sendLocationBtn">Send Location</button>
+    <p id="status"></p>
+
+    <script>
+        const button = document.getElementById('sendLocationBtn');
+        const statusText = document.getElementById('status');
+
+        button.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+
+                        // Display the location locally
+                        statusText.textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
+
+                        // Send location to server
+                        fetch('http://localhost:3000/location', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ latitude, longitude }),
+                        })
+                            .then((response) => response.text())
+                            .then((data) => {
+                                console.log(data);
+                                statusText.textContent += ' (Location sent successfully!)';
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                                statusText.textContent = 'Error sending location.';
+                            });
+                    },
+                    (error) => {
+                        // Handle geolocation errors
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                statusText.textContent = "Permission denied. Please allow location access.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                statusText.textContent = "Location information is unavailable.";
+                                break;
+                            case error.TIMEOUT:
+                                statusText.textContent = "Location request timed out.";
+                                break;
+                            default:
+                                statusText.textContent = "An unknown error occurred.";
+                        }
+                    }
+                );
+            } else {
+                statusText.textContent = "Geolocation is not supported by your browser.";
+            }
+        });
+    </script>
+</body>
+</html>
